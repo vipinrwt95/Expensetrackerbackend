@@ -1,22 +1,22 @@
 const User=require('../models/user');
+const bcrypt=require('bcrypt')
 
-exports.postAddUser=(req,res,next)=>{
+exports.postAddUser=async(req,res,next)=>{
 
-    const name=req.body.name;
-    const email=req.body.email;
-    const password=req.body.password;
-    
-    User.create({
-     name:name,
-     email:email,
-     password:password
-    }).then(data=>{
-        res.send(data)  
-       console.log('User created')
-    }).catch((err)=>{
-        console.log(err.message)
-        res.send(err.message);
-    })
+    try{
+       // console.log(req.body)
+        const name=req.body.name;
+        const email=req.body.email;
+        const password=req.body.password;
+       bcrypt.hash(password,10,async(err,hash)=>{
+         console.log(err)
+         await User.create({name,email,password:hash})
+         res.status(201).json({message:'User created'})
+       })
+    }
+    catch(err){
+        res.status(500).json(err);
+    }
 
 }
 exports.loginUser=(req,res,next)=>{
@@ -29,21 +29,24 @@ exports.loginUser=(req,res,next)=>{
           email:email  
         }
     }).then(data=>{
-      
-       if(data[0])
-       {
-        if(data[0].password==req.body.password)
-        {    let message='User Logged in'
-            res.send(message);
-        }
-        else{
-            let message='Wrong password'
-            res.send(message);
-        }
-       } 
-       else{
-        let message='User does not exist '
-        res.send(message);
-       }
+        console.log(data)
+      if(data.length>0)
+      {
+        bcrypt.compare(password,data[0].password,function(err,response){
+            console.log(response)
+          if(err)
+          {
+            return res.json({succes:false,message:'Something went wrong'})
+          }
+         if(response)
+         {
+           return res.json({succes:true,message:'Logged in'}) 
+         }
+
+        })
+      }
+      else{
+        return res.status(404).json({message:'passwords do not match'})
+      }
     })
 }
