@@ -1,5 +1,11 @@
 const User=require('../models/user');
 const bcrypt=require('bcrypt')
+const jwt = require('jsonwebtoken')
+
+
+function generateAccessToken(id){
+  return jwt.sign({userId:id},'987847448332fh4h3h3dbcncnm33m4g07h6865h')
+}
 
 exports.postAddUser=async(req,res,next)=>{
 
@@ -19,34 +25,63 @@ exports.postAddUser=async(req,res,next)=>{
     }
 
 }
-exports.loginUser=(req,res,next)=>{
-   
+
+exports.loginUser=async(req,res,next)=>{
+   try{
+      
     const email=req.body.email;
     const password=req.body.password;
+    console.log(req.body);
     
-    User.findAll({
-        where:{
-          email:email  
-        }
-    }).then(data=>{
-        console.log(data)
-      if(data.length>0)
-      {
-        bcrypt.compare(password,data[0].password,function(err,response){
-            console.log(response)
-          if(err)
-          {
-            return res.json({succes:false,message:'Something went wrong'})
-          }
-         if(response)
-         {
-           return res.json({succes:true,message:'Logged in'}) 
-         }
+    // User.findAll({
+    //     where:{
+    //       email:email  
+    //     }
+    // }).then(data=>{
+    //   if(data.length>0)
+    //   {
+    //     bcrypt.compare(password,data[0].password,function(err,response){
+    //         console.log(response)
+    //       if(err)
+    //       {
+    //         return res.json({succes:false,message:'Passwords dont match'})
+    //       }
+    //      if(response)
+    //      {
+    //        return res.status(200).json({succes:true,message:'Logged in',token:generateAccessToken(data[0].id)}) 
+    //      }
 
-        })
-      }
-      else{
-        return res.status(404).json({message:'passwords do not match'})
-      }
+    //     })
+    //   }}).catch(err=>{
+    //     throw "UsER nOT found"
+    //   })
+    
+    let data=await User.findAll({
+       where:{
+              email:email }
     })
+    if(data.length==0)
+    {
+      throw "User Not Found";
+    }
+    if(data.length>0)
+      {
+         bcrypt.compare(password,data[0].password,function(err,response){
+             console.log(response)
+           if(err)
+           {
+             return res.json({succes:false,message:'Passwords dont match'})
+           }
+          if(response)
+          {
+            return res.status(200).json({succes:true,message:'Logged in',token:generateAccessToken(data[0].id)}) 
+          }
+         })
+      }
+    }
+catch(err){
+    console.log('here');
+      return res.status(404).json({message:err});
+   }
+    
 }

@@ -1,16 +1,19 @@
+const { and } = require('sequelize');
 const Expense=require('../models/Expense');
 
 
 exports.addExpense=async(req,res,next)=>{
- console.log(req.body)
+ 
  try{
     const expense=req.body.expense;
     const description=req.body.description;
     const category=req.body.category;
-     console.log(category);
-    let data=await Expense.create({expense,description,category})
+     
+     req.user.createExpense({expense,description,category}).then(data=>{
+      res.status(201).json(data)
+     })
+     
     
-    res.status(201).json(data)
 
  }
  catch{err=>{
@@ -20,9 +23,9 @@ exports.addExpense=async(req,res,next)=>{
 
 exports.getExpenses=async(req,res,next)=>{
    try{
-     Expense.findAll()
+     req.user.getExpenses()
      .then(data=>{
-        console.log(data)
+        
        res.status(201).json(data)
      })
    }
@@ -34,12 +37,13 @@ exports.getExpenses=async(req,res,next)=>{
 
 }
 exports.deleteExpense=async(req,res,next)=>{
-    
-    try{
+   console.log(req.user)
+   console.log(req.body.id)
+   try{
        await Expense.destroy({
-        where:{id:req.body.id}
-       }) 
-       res.status(201).json({message:'Expense Deleted'});
+         where:{id:req.body.id , userId:req.user.id}
+       })
+       res.status(201).json({message:'Item DELETED'})
     }
    catch{
     err=>{
