@@ -1,4 +1,4 @@
-const { and } = require('sequelize');
+
 const Expense=require('../models/Expense');
 
 
