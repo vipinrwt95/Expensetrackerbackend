@@ -1,8 +1,14 @@
+const jwt = require('jsonwebtoken');
 const Razorpay=require('razorpay');
+
 const Order=require('../models/Order');
+const User=require('../models/user');
+const Expense=require('../models/Expense');
 require("dotenv").config();
 
-
+const generateAccessToken=(id,name,ispremiumuser)=>{
+  return jwt.sign({userId:id,name:name,ispremiumuser},'987847448332fh4h3h3dbcncnm33m4g07h6865h')
+}
 exports.purchasepremium=async(req,res)=>{
   
   try{
@@ -35,6 +41,8 @@ exports.updateTransactionsStatus=async(req,res)=>{
   if(req.body.status==true)
   {
     try{
+      const userid = req.user.id;
+      const username = req.user.name;
       const order_id=req.body.order_id;
       const payment_id=req.body.payment_id
       const order = await Order.findOne({ where: { orderid: order_id } });
@@ -46,7 +54,7 @@ exports.updateTransactionsStatus=async(req,res)=>{
    
       Promise.all([promise1,promise2]).then(data=>{
         
-        res.status(202).json({succes:true,message:'Transaction successful'})
+        res.status(202).json({succes:true,message:'Transaction successful',token:generateAccessToken(userid,username,true)})
       }).catch(err=>{throw new Error(err)});
     }
     catch (err){
@@ -64,6 +72,19 @@ exports.updateTransactionsStatus=async(req,res)=>{
     
   }
 }
+exports.leaderboard = (req, res, next) => {
+  
+Expense.findAll({
+    attributes: ["userId"],
+  })
+    .then((data) => {
+      const jsonData = JSON.parse(JSON.stringify(data));
+        console.log(jsonData);
+        res.json(jsonData);
+      })
+      
+.catch((e) => console.log(e));
+};
      
     
   
