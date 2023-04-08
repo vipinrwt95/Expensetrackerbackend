@@ -4,6 +4,7 @@ const Razorpay=require('razorpay');
 const Order=require('../models/Order');
 const User=require('../models/user');
 const Expense=require('../models/Expense');
+const sequelize = require('../util/database');
 require("dotenv").config();
 
 const generateAccessToken=(id,name,ispremiumuser)=>{
@@ -72,18 +73,22 @@ exports.updateTransactionsStatus=async(req,res)=>{
     
   }
 }
-exports.leaderboard = (req, res, next) => {
+exports.leaderboard = async(req, res, next) => {
   
-Expense.findAll({
-    attributes: ["userId"],
-  })
-    .then((data) => {
-      const jsonData = JSON.parse(JSON.stringify(data));
-        console.log(jsonData);
-        res.json(jsonData);
-      })
-      
-.catch((e) => console.log(e));
+try{
+    const leaderboardusers=await User.findAll({
+      attributes:['name','id',[sequelize.fn('sum',sequelize.col('expense')),'totalcost']],
+      include:[{model:Expense,attributes:[]}],
+      group:['user.id'],
+      order:[[sequelize.col("totalcost"),"DESC"]]
+    })
+  
+res.status(202).json({leaderboardusers});
+    
+}
+catch(err){
+
+}
 };
      
     
