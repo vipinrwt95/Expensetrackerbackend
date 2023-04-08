@@ -76,14 +76,19 @@ exports.updateTransactionsStatus=async(req,res)=>{
 exports.leaderboard = async(req, res, next) => {
   
 try{
-    const leaderboardusers=await User.findAll({
-      attributes:['name','id',[sequelize.fn('sum',sequelize.col('expense')),'totalcost']],
-      include:[{model:Expense,attributes:[]}],
-      group:['user.id'],
-      order:[[sequelize.col("totalcost"),"DESC"]]
+  User.findAll({
+    attributes: ["name", "total"],
+  })
+    .then((data) => {
+
+      const jsonData = JSON.parse(JSON.stringify(data));
+
+      jsonData.sort((a, b) => b.total - a.total);
+      console.log(jsonData);
+      res.json(jsonData);
     })
-  
-res.status(202).json({leaderboardusers});
+    .catch((e) => console.log(e));
+ res.status(202).json({leaderboardusers});
     
 }
 catch(err){
