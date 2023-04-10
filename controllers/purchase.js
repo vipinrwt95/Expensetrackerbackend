@@ -76,8 +76,8 @@ exports.updateTransactionsStatus=async(req,res)=>{
 exports.leaderboard = async(req, res, next) => {
   
 try{
-  User.findAll({
-    attributes: ["name", "total"],
+  const users= await User.findAll({
+    attributes: ["name", "totalExpense"],
   })
     .then((data) => {
 
@@ -88,7 +88,7 @@ try{
       res.json(jsonData);
     })
     .catch((e) => console.log(e));
- res.status(202).json({leaderboardusers});
+ 
     
 }
 catch(err){
