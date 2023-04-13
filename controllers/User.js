@@ -1,6 +1,8 @@
 const User=require('../models/user');
 const bcrypt=require('bcrypt')
 const jwt = require('jsonwebtoken')
+const Sib=require('sib-api-v3-sdk');
+require("dotenv").config();
 
 
 function generateAccessToken(id,name,premium){
@@ -61,4 +63,26 @@ catch(err){
       return res.status(404).json({message:err});
    }
     
+}
+exports.resetpassword=async(req,res,next)=>{
+  
+  const client=Sib.ApiClient.instance
+  const apiKey=client.authentications['api-key'];
+  apiKey.apiKey="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";
+  const tranEmailApi=new Sib.TransactionalEmailsApi()
+  const sender={
+    email:'vipinrwt9@gmail.com'
+  }
+  const recievers=[{
+    email:req.body.email
+  }]
+  console.log(process.env.SENDINBLUE_API_KEY);
+
+  tranEmailApi.sendTransacEmail({
+    sender,
+    to:recievers,
+    subject:'Demo Project//',
+    textContent:'Namaskaaaar'
+  }).then(result=>{console.log(result)})
+  .catch(err=>{console.log(err)})
 }
