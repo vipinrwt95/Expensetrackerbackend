@@ -11,12 +11,13 @@ const purchaseRoutes=require('./routes/purchase');
 const User = require("./models/user");
 const Expense = require("./models/Expense");
 const Order=require('./models/Order');
+const Request=require('./models/ForgotPasswordRequests');
 const dotenv=require("dotenv");
-dotenv.congig();
-
+dotenv.config();
 const app = express();
 app.use(cors());
-app.use(bodyParser.json({extended:false}));
+app.use(bodyParser.urlencoded({ extended: true }));
+app.use(bodyParser.json());
 app.use(registerRoutes)
 app.use(ExpenseRoutes)
 app.use(purchaseRoutes)
@@ -26,6 +27,8 @@ User.hasMany(Expense)
 Expense.belongsTo(User)
 User.hasMany(Order);
 Order.belongsTo(User);
+User.hasMany(Request);
+Request.belongsTo(User)
 
 sequelize.sync().then(result=>{
     

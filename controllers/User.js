@@ -2,6 +2,8 @@ const User=require('../models/user');
 const bcrypt=require('bcrypt')
 const jwt = require('jsonwebtoken')
 const Sib=require('sib-api-v3-sdk');
+const { v4 } = require("uuid");
+const ForgotPassword = require('../models/ForgotPasswordRequests');
 require("dotenv").config();
 
 
@@ -64,25 +66,92 @@ catch(err){
    }
     
 }
-exports.resetpassword=async(req,res,next)=>{
+exports.forgotPassword=async(req,res,next)=>{
   
+  const {email}=req.body
   const client=Sib.ApiClient.instance
   const apiKey=client.authentications['api-key'];
-  apiKey.apiKey="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";
+  apiKey.apiKey="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";
   const tranEmailApi=new Sib.TransactionalEmailsApi()
-  const sender={
-    email:'vipinrwt9@gmail.com'
-  }
-  const recievers=[{
-    email:req.body.email
-  }]
-  console.log(process.env.SENDINBLUE_API_KEY);
+  const id=v4();
+  
+  User.findAll({where:{email},attributes:["id"]})
+  .then((data)=>{
+      const jsonData=JSON.parse(JSON.stringify(data));
+      console.log(jsonData)
+      if(jsonData.length>0){
+        return ForgotPassword.create({
+          id,
+          userId:jsonData[0].id,
+          isActive:true,
+          
+        })
+      }
+      else {
+        res.json({status:"email not found"});
+      }
+    })
+    .then((data)=>{
+     const sender={
+      name:"Reset Password",
+      email:"Expense@tracker.com"
+     };
+     const reciever=[{
+      email:email
+     }]
+     return tranEmailApi.sendTransacEmail({
+       sender,
+       to:reciever,
+       subject:"Reset Password",
+       textContent:"Reset Your Password",
+       htmlContent: `<a href=http://localhost:3001/password/reset/${id} > Reset Link </a>`,
+      })
+    })
+    .then((data)=>{
+      console.log(data);
+      res.status(200).json({status:"Done"})
+    })
+    .catch((e)=>{
+      console.log(e);
+      res.json({status:e});
+    })
 
-  tranEmailApi.sendTransacEmail({
-    sender,
-    to:recievers,
-    subject:'Demo Project//',
-    textContent:'Namaskaaaar'
-  }).then(result=>{console.log(result)})
-  .catch(err=>{console.log(err)})
 }
+exports.resetPassword=async(req,res,next)=>{
+  try {
+    
+    const data = await ForgotPassword.findByPk(req.params.id);
+    if (data.isActive) {
+      data.isActive = false;
+      data.save();
+      res.send(`
+    <form action='http://localhost:3001/password/final' method='POST'>
+      <input name='password' placeholder='enter new password'/>
+      <input type="hidden" name="id" value=${data.userId} />
+      <button type='submit'>Submit</button>
+    </form>`);
+    } else {
+      res.send("<h1>Link Exprire</h1>");
+    }
+  } catch (e) {
+    console.log(e);
+    res.send("<h1>Link Expire</h1>");
+    console.log(e);
+  } 
+  
+}
+exports.finalReset = (req, res, next) => {
+  const password=req.body.password;
+  const id=req.body.id;
+  console.log(password);
+  bcrypt.hash(password, 8, (err, hash) => {
+    User.findByPk(id)
+      .then((data) => {
+        console.log(data);
+        data.password = hash;
+        data.save();
+        res.send("<h3>Password Has Been Reset!</h3><h3>Login again</h3> ");
+      })
+      .catch((e) => console.log(e));
+  });
+};
