@@ -35,9 +35,7 @@ exports.loginUser=async(req,res,next)=>{
       
     const email=req.body.email;
     const password=req.body.password;
-    console.log(req.body);
-    
-let data=await User.findAll({
+  let data=await User.findAll({
        where:{
               email:email }
     })
@@ -47,21 +45,21 @@ let data=await User.findAll({
     }
     if(data.length>0)
       {
-         bcrypt.compare(password,data[0].password,function(err,response){
-             console.log(response)
-           if(err)
-           {
-             return res.json({succes:false,message:'Passwords dont match'})
-           }
+        await bcrypt.compare(password,data[0].password,function(err,response){
+          
           if(response)
           {
             return res.status(200).json({succes:true,message:'Logged in',token:generateAccessToken(data[0].id,data[0].name,data[0].isPremium)}) 
           }
+          else {
+            res.status(301).json({ msg: "Wrong Password" })
+          }
+          
          })
       }
     }
 catch(err){
-    console.log('here');
+    console.log(err);
       return res.status(404).json({message:err});
    }
     
